@@ -24,7 +24,11 @@ from .activated_batch_norm import ABN
 from .activated_batch_norm import SyncABN
 from .activated_group_norm import AGN
 from .activated_no_norm import NoNormAct
-from inplace_abn import InPlaceABN, InPlaceABNSync
+try:
+    from inplace_abn import InPlaceABN, InPlaceABNSync
+    INPLACE_ABN = True
+except ImportError:
+    INPLACE_ABN = False
 
 # NOTE: after adding new normalization don't forget to also patch `filter_bn_from_wd` function
 def bn_from_name(norm_name):
@@ -34,9 +38,15 @@ def bn_from_name(norm_name):
     elif norm_name in ("syncabn", "sync_abn", "abn_sync"):
         return SyncABN
     elif norm_name in ("inplaceabn", "inplace_abn"):
-        return InPlaceABN
+        if INPLACE_ABN:
+            return InPlaceABN
+        else:
+            return ABN
     elif norm_name == "inplaceabnsync":
-        return InPlaceABNSync
+        if INPLACE_ABN:
+            return InPlaceABNSync
+        else:
+            return SyncABN
     elif norm_name in ("frozen_abn", "frozenabn"):
         return partial(ABN, frozen=True)
     # not sure anyone would ever need this but let's support just in case
